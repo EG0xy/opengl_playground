@@ -46,15 +46,23 @@ global b32 global_pause;
 global Win32_Offscreen_Buffer global_backbuffer;
 global s64 global_performance_count_frequency;
 
+global GLuint global_blit_texture_handle = 0;
+
+
+global int x_offset = 0;
+global int y_offset = 0;
+
 
 internal void
 win32_init_opengl(HWND window) {
     HDC window_dc = GetDC(window);
+    defer { ReleaseDC(window, window_dc); };
     
     PIXELFORMATDESCRIPTOR desired_pixel_format = {};
-    desired_pixel_format.nSize = sizeof(desired_pixel_format);
-    desired_pixel_format.nVersion = 1;
-    desired_pixel_format.dwFlags = PFD_SUPPORT_OPENGL | PFD_DRAW_TO_WINDOW | PFD_DOUBLEBUFFER;
+    desired_pixel_format.nSize      = sizeof(desired_pixel_format);
+    desired_pixel_format.nVersion   = 1;
+    desired_pixel_format.iPixelType = PFD_TYPE_RGBA;
+    desired_pixel_format.dwFlags    = PFD_SUPPORT_OPENGL | PFD_DRAW_TO_WINDOW | PFD_DOUBLEBUFFER;
     desired_pixel_format.cColorBits = 32;
     desired_pixel_format.cAlphaBits =  8;
     desired_pixel_format.iLayerType = PFD_MAIN_PLANE;
@@ -64,11 +72,13 @@ win32_init_opengl(HWND window) {
     DescribePixelFormat(window_dc, suggested_pixel_format_index, sizeof(suggested_pixel_format), &suggested_pixel_format);
     SetPixelFormat(window_dc, suggested_pixel_format_index, &suggested_pixel_format);
     
-    defer { ReleaseDC(window, window_dc); };
     HGLRC opengl_rc = wglCreateContext(window_dc);
     if (!wglMakeCurrent(window_dc, opengl_rc)) {
         assert(false);
+        return;
     }
+    
+    glGenTextures(1, &global_blit_texture_handle);
 }
 
 internal void
@@ -104,6 +114,30 @@ win32_get_window_dimension(HWND window) {
     result.height = client_rect.bottom - client_rect.top;
     
     return result;
+}
+
+internal void
+render_weird_gradient(Win32_Offscreen_Buffer *buffer, int blue_offset, int green_offset) {
+    // @TODO Let's see what the optimizer does
+    
+    u8 *row = (u8 *)buffer->memory;
+    for (int y = 0; y < buffer->height; ++y) {
+        u32 *pixel = (u32 *)row;
+        for (int x = 0; x < buffer->width; ++x) {
+            /*                  0  1  2  3
+                                pixel in memory: 00 00 00 00
+                                LITTLE ENDIAN ARCHITECTURE
+                                pixel in memory:      BB GG RR xx
+                                pixel in Register: 0x xx RR GG BB
+            */
+            u8 blue = (u8)(x + blue_offset);
+            u8 green = (u8)(y + green_offset);
+            
+            *pixel++ = ((green << 16) | blue);
+        }
+        
+        row += buffer->pitch;
+    }
 }
 
 internal void
@@ -143,12 +177,79 @@ win32_display_buffer_in_window(Win32_Offscreen_Buffer *buffer, HDC device_contex
                   buffer->memory, &buffer->info,
                   DIB_RGB_COLORS, SRCCOPY);
 #endif
-#endif
+    
+#else
+    glViewport(0, 0, window_width, window_height);
+    
+    glEnable(GL_TEXTURE_2D);
+    glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
+    
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP);
+    
+    glBindTexture(GL_TEXTURE_2D, global_blit_texture_handle);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, buffer->width, buffer->height, 0, GL_BGRA_EXT, GL_UNSIGNED_BYTE, buffer->memory);
     
     glClearColor(1.0f, 0.0f, 0.0f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT);
-    glViewport(0, 0, window_width, window_height);
+    
+    glMatrixMode(GL_TEXTURE);
+    glLoadIdentity();
+    
+    glMatrixMode(GL_MODELVIEW);
+    glLoadIdentity();
+    
+    glMatrixMode(GL_PROJECTION);
+    glLoadIdentity();
+    
+    glBegin(GL_TRIANGLES);
+    f32 p = 1.f;
+    
+    // @note Upper triangle
+    glTexCoord2f(0.f, 0.f);
+    glVertex2f(-p, -p);
+    
+    glTexCoord2f(1.f, 1.f);
+    glVertex2f(p, p);
+    
+    glTexCoord2f(0.f, 1.f);
+    glVertex2f(-p, p);
+    
+    // @note Lower triangle
+    glTexCoord2f(0.f, 0.f);
+    glVertex2f(-p, -p);
+    
+    glTexCoord2f(1.f, 0.f);
+    glVertex2f(p, -p);
+    
+    glTexCoord2f(1.f, 1.f);
+    glVertex2f(p, p);
+    
+    glEnd();
+    
+#if 0
+    glBegin(GL_TRIANGLES);
+    f32 p = 0.9f;
+    // @note Upper triangle
+    glColor3f(1.f, 0.f, 0.f);
+    glVertex2f(-p, -p);
+    glColor3f(0.f, 1.f, 0.f);
+    glVertex2f(p, p);
+    glColor3f(0.f, 0.f, 1.f);
+    glVertex2f(-p, p);
+    
+    // @note Lower triangle
+    glColor3f(1.f, 1.f, 1.f);
+    glVertex2f(-p, -p);
+    glVertex2f(p, -p);
+    glVertex2f(p, p);
+    glEnd();
+#endif
+    
     SwapBuffers(device_context);
+#endif
 }
 
 LRESULT CALLBACK
@@ -222,6 +323,7 @@ WinMain(HINSTANCE instance,
     b32 sleep_is_granular = (timeBeginPeriod(desired_scheduler_ms) == TIMERR_NOERROR);
     
     win32_resize_dib_section(&global_backbuffer, WIDTH, HEIGHT);
+    // win32_resize_dib_section(&global_backbuffer, 1920, 1080);
     
     WNDCLASSA window_class = {};
     window_class.style = CS_HREDRAW|CS_VREDRAW|CS_OWNDC;
@@ -280,6 +382,20 @@ WinMain(HINSTANCE instance,
                     // we MUST use == and != to convert these bit tests to actual 0 or 1 values.
                     b32 was_down = ((message.lParam & (1 << 30)) != 0);
                     b32 is_down = ((message.lParam & (1 << 31)) == 0);
+                    if (is_down) {
+                        if (vk_code == 'W') {
+                            y_offset += 5;
+                        }
+                        else if (vk_code == 'A') {
+                            x_offset -= 5;
+                        }
+                        else if (vk_code == 'S') {
+                            y_offset -= 5;
+                        }
+                        else if (vk_code == 'D') {
+                            x_offset += 5;
+                        }
+                    }
                     if (was_down != is_down) {
                         if (vk_code == 'W') {
                         }
@@ -337,6 +453,11 @@ WinMain(HINSTANCE instance,
                 } break;
             }
         }
+        
+        // 
+        // @note Update and render
+        // 
+        render_weird_gradient(&global_backbuffer, x_offset, y_offset);
         
         //
         // @note frame rate
