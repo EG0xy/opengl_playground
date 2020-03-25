@@ -56,6 +56,7 @@ set src_folder_path=%project_folder_path%src\
 :: vcvarsall
 ::
 
+:: call "%VS_VCVARSALL_FILE_PATH%" x86
 call "%VS_VCVARSALL_FILE_PATH%" x64
 
 

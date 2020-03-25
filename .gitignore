@@ -27,3 +27,6 @@ build
 
 run_tree/x86/
 run_tree/x86_64/
+
+
+glfw-3.3.2/
