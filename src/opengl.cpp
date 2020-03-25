@@ -19,8 +19,16 @@
 #include <GLFW/glfw3.h>
 
 
+#define STB_IMAGE_IMPLEMENTATION
+#include "stb_image.h"
+#undef assert
+
+
 #include "iml_general.h"
 #include "iml_types.h"
+
+
+#include "shader.h"
 
 
 void framebuffer_size_callback(GLFWwindow *window, int width, int height) {
@@ -67,25 +75,29 @@ int main() {
     glBindVertexArray(vao);
     
     
-#if 1
+#if 0
     // @note: Draw Triangle
     // Normalized Device Coordinates (NDC)
     f32 vertices[] = {
-        -0.5, -0.5,  0.0f, // Vertex containing one 3D position
-        0.5f, -0.5f, 0.0f,
-        0.0f,  0.5f, 0.0f,
-        
-        0.0f, 0.0f,  0.0f,
-        0.5f, 0.0f, 0.0f,
-        0.5f, 0.5f, 0.0f
+        // positions         // colors
+        -0.5, -0.5,  0.0f,  1.0f, 0.0f, 0.0f, // Vertex containing one 3D position
+        0.5f, -0.5f, 0.0f,  0.0f, 1.0f, 0.0f,
+        0.0f,  0.5f, 0.0f,  0.0f, 0.0f, 1.0f
+            
+            /*
+                    0.0f, 0.0f,  0.0f,
+                    0.5f, 0.0f, 0.0f,
+                    0.5f, 0.5f, 0.0f
+            */
     };
 #else
-    // @note: Draw Rectangle
+    // @note: Draw Texture
     f32 vertices[] = {
-        0.5f,   0.5f, 0.0f, // top right
-        0.5f,  -0.5f, 0.0f, // bottom right
-        -0.5f, -0.5f, 0.0f, // bottom left
-        -0.5f,  0.5f, 0.0f, // top left
+        // positions         // colors          // texture coordinates
+        0.5f,   0.5f, 0.0f,  1.0f, 0.0f, 0.0f,  1.0f, 1.0f, // top right
+        0.5f,  -0.5f, 0.0f,  0.0f, 1.0f, 0.0f,  1.0f, 0.0f, // bottom right
+        -0.5f, -0.5f, 0.0f,  0.0f, 0.0f, 1.0f,  0.0f, 0.0f, // bottom left
+        -0.5f,  0.5f, 0.0f,  1.0f, 1.0f, 0.0f,  0.0f, 1.0f, // top left
     };
 #endif
     
@@ -103,72 +115,119 @@ int main() {
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo);
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
     
-    b32 success;
-    char info_log[512];
-    
     // @note: Vertex shader
     const char *vertex_shader_source = R"FOO(
-                                                                                                                #version 330 core
-                                                                                                                layout (location = 0) in vec3 aPos;
-                                                                                                                
-                                                                                                                void main() {
-                                                                                                                    gl_Position = vec4(aPos.x, aPos.y, aPos.z, 1.0);
-                                                                                                                }
-                                                                                                                                                                                                        )FOO";
-    u32 vertex_shader;
-    vertex_shader = glCreateShader(GL_VERTEX_SHADER);
-    glShaderSource(vertex_shader, 1, &vertex_shader_source, NULL);
-    glCompileShader(vertex_shader);
-    glGetShaderiv(vertex_shader, GL_COMPILE_STATUS, &success);
-    if (!success) {
-        glGetShaderInfoLog(vertex_shader, 512, NULL, info_log);
-        printf("Error: Vertex shader compilation failed\nInfoLog:\n%s", info_log);
-    }
-    
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            #version 330 core
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            layout (location = 0) in vec3 aPos;
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        layout (location = 1) in vec3 aColor;
+                                                                                                                                                                                                                                                                                                                                                            layout (location = 2) in vec2 aTexCoord;
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            out vec3 our_color;
+                                                                                                                                                                                                    out vec2 tex_coord;
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            void main() {
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                gl_Position = vec4(aPos, 1.0);
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    our_color = aColor;
+                                                                                                                tex_coord = aTexCoord;
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            }
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    )FOO";
     // @note: Fragment shader
     const char *fragment_shader_source = R"FOO(
-                                                                                                                                                                                                                                                                                                                                        #version 330 core
-                                                                                                                                                                                                                                                                                                            out vec4 frag_color;
-                                                                                                                                                                                                                                                                                                                                        
-                                                                                                                                                                                                                                                                                                                                        void main() {
-                                                                                                                                                                                                                                frag_color = vec4(1.0f, 0.5f, 0.2f, 1.0f);
-                                                                                                                                                                                                                                                                                                                                        }
-                                                                                                                                                                                                                                                                                                                                                                                                                                )FOO";
-    u32 fragment_shader;
-    fragment_shader = glCreateShader(GL_FRAGMENT_SHADER);
-    glShaderSource(fragment_shader, 1, &fragment_shader_source, NULL);
-    glCompileShader(fragment_shader);
-    glGetShaderiv(fragment_shader, GL_COMPILE_STATUS, &success);
-    if (!success) {
-        glGetShaderInfoLog(fragment_shader, 512, NULL, info_log);
-        printf("Error: Fragment shader compilation failed\nInfoLog:\n%s", info_log);
-    }
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                #version 330 core
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    // uniform vec4 our_color; // Set in c++ code
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    in vec3 our_color;
+                                                                                                                                                                                                                                                                                                                                                                            in vec2 tex_coord;
+                                                                                                                                                                                                                                                                                                uniform sampler2D our_texture;
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    out vec4 frag_color;
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                void main() {
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        // frag_color = vec4(our_color, 1.0);
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        frag_color = texture(our_texture, tex_coord);
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                }
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        )FOO";
+    Shader shader = create_shader(vertex_shader_source, fragment_shader_source);
+    use_shader(shader);
     
-    // @note: Shader program
-    u32 shader_program;
-    shader_program = glCreateProgram();
-    glAttachShader(shader_program, vertex_shader);
-    glAttachShader(shader_program, fragment_shader);
-    glLinkProgram(shader_program);
-    glGetProgramiv(shader_program, GL_LINK_STATUS, &success);
-    if (!success) {
-        glGetProgramInfoLog(shader_program, 512, NULL, info_log);
-        printf("Error: Shader program linking failed\nInfoLog:\n%s", info_log);
-    }
-    else {
-        glUseProgram(shader_program);
-    }
-    glDeleteShader(vertex_shader);
-    glDeleteShader(fragment_shader);
-    
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(f32), (void *)0);
+    // @note: Position attribute
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(f32), (void *)0);
     glEnableVertexAttribArray(0);
     
+    // @note: Color attribute
+    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(f32), (void *)(3 * sizeof(f32)));
+    glEnableVertexAttribArray(1);
     
+    // @note: Texture coordinates
+    glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(f32), (void *)(6 * sizeof(f32)));
+    glEnableVertexAttribArray(2);
+    
+    
+    //
+    // @note: Wireframe
+    //
 #if 0
     glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 #else
     glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+#endif
+    
+    //
+    // @note: Textures
+    //
+    int width, height, nr_channels;
+    u8 *data = stbi_load("../assets/container.jpg", &width, &height, &nr_channels, 0);
+    defer {
+        stbi_image_free(data);
+    };
+    
+    // @note: Generating a texture
+    u32 texture;
+    glGenTextures(1, &texture);
+    glBindTexture(GL_TEXTURE_2D, texture);
+    if (data) {
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
+        glGenerateMipmap(GL_TEXTURE_2D);
+    }
+    
+    //
+    // @note: Texture Wrapping
+    //
+#if 0
+    // GL_REPEAT   default
+    // GL_MIRRORED_REPEAT
+    // GL_CLAMP_TO_EDGE
+    // GL_CLAMP_TO_BORDER
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+    
+    f32 border_color[] = { 1.0f, 1.0f, 0.0f, 1.0f };
+    glTexParameterfv(GL_TEXTURE_2D, GL_TEXTURE_BORDER_COLOR, border_color);
+#endif
+    
+    //
+    // @note: Texture Filtering
+    //
+#if 0
+    // GL_NEAREST = best for pixel art
+    // GL_LINEAR  = (bi)linear
+    //
+    // Can be set for minifying and magnifying
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+#endif
+    
+    //
+    // @note: Mipmaps
+    //
+#if 0
+    // GL_NEAREST_MIPMAP_NEAREST
+    // GL_LINEAR_MIPMAP_NEAREST
+    // GL_NEAREST_MIPMAP_LINEAR
+    // GL_LINEAR_MIPMAP_LINEAR
+    // These are only used for downscaling!
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 #endif
     
     
@@ -181,12 +240,20 @@ int main() {
         glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT);
         
-        glUseProgram(shader_program);
+        use_shader(shader);
+        
+        f32 time_value = glfwGetTime();
+        f32 green_value = (sin(time_value) / 2.0f) + 0.5f;
+        int vertex_color_location = glGetUniformLocation(shader.id, "our_color");
+        glUniform4f(vertex_color_location, 0.0f, green_value, 0.0f, 1.0f);
+        
+        glBindTexture(GL_TEXTURE_2D, texture);
+        
         glBindVertexArray(vao);
         defer {
             glBindVertexArray(0);
         };
-#if 1
+#if 0
         glDrawArrays(GL_TRIANGLES, 0, 6);
 #else
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo);
