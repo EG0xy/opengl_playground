@@ -18,6 +18,10 @@
 #pragma comment(lib, "glfw3")
 #include <GLFW/glfw3.h>
 
+#include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtc/type_ptr.hpp>
+
 
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h"
@@ -244,9 +248,11 @@ int main() {
         use_shader(shader);
         
         f32 time_value = glfwGetTime();
-        f32 green_value = (sin(time_value) / 2.0f) + 0.5f;
-        int vertex_color_location = glGetUniformLocation(shader.id, "our_color");
-        glUniform4f(vertex_color_location, 0.0f, green_value, 0.0f, 1.0f);
+        glm::mat4 trans = glm::mat4(1.0f);
+        trans = glm::rotate(trans, (float)time_value, glm::vec3(0.0, 0.0, 1.0));
+        trans = glm::translate(trans, glm::vec3(0.5f, -0.5f, 0.0f));
+        int vertex_transform_location = glGetUniformLocation(shader.id, "transform");
+        glUniformMatrix4fv(vertex_transform_location, 1, GL_FALSE, glm::value_ptr(trans));
         
         glActiveTexture(GL_TEXTURE0);
         glBindTexture(GL_TEXTURE_2D, texture1);
