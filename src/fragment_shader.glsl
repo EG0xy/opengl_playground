@@ -6,7 +6,6 @@ R"FOO(
 #define lerp(a, t, b)  mix(a, b, t)
 
 // uniform vec4 our_color; // Set in c++ code
-in vec3 our_color;
 in vec2 tex_coord;
 uniform sampler2D texture1;
 uniform sampler2D texture2;
