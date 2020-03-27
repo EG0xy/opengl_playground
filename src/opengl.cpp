@@ -33,22 +33,21 @@
 
 
 #include "shader.h"
+#include "camera.h"
 
-global f32 fov = 45.0f;
+
+#define SCREEN_WIDTH   800
+#define SCREEN_HEIGHT  600
+
 
 global b32 first_mouse = true;
-global f32 last_mouse_x = 400;
-global f32 last_mouse_y = 300;
-
-global f32 yaw = -90.0f;
-global f32 pitch = 0.0f;
-
-global glm::vec3 camera_pos = glm::vec3(0.0f, 0.0f, 3.0f);
-global glm::vec3 camera_direction = glm::vec3(0.0f, 0.0f, -1.0f);
-global glm::vec3 camera_up = glm::vec3(0.0f, 1.0f, 0.0f);
+global f32 last_mouse_x = SCREEN_WIDTH / 2.0f;
+global f32 last_mouse_y = SCREEN_HEIGHT / 2.0f;
 
 global f32 dt = 0.0f;
 global f32 last_frame = 0.0f;
+
+global Camera camera = {};
 
 
 void framebuffer_size_callback(GLFWwindow *window, int width, int height) {
@@ -60,18 +59,17 @@ void process_input(GLFWwindow *window) {
         glfwSetWindowShouldClose(window, true);
     }
     
-    f32 camera_speed = 2.5f * dt;
     if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS) {
-        camera_pos += camera_speed * camera_direction;
+        process_keyboard(&camera, FORWARD, dt);
     }
     if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS) {
-        camera_pos -= camera_speed * camera_direction;
+        process_keyboard(&camera, BACKWARD, dt);
     }
     if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS) {
-        camera_pos -= glm::normalize(glm::cross(camera_direction, camera_up)) * camera_speed;
+        process_keyboard(&camera, LEFT, dt);
     }
     if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS) {
-        camera_pos += glm::normalize(glm::cross(camera_direction, camera_up)) * camera_speed;
+        process_keyboard(&camera, RIGHT, dt);
     }
 }
 
@@ -84,32 +82,16 @@ mouse_callback(GLFWwindow *window, double pos_x, double pos_y) {
     }
     
     f32 offset_x = pos_x - last_mouse_x;
-    f32 offset_y = last_mouse_y - pos_y;
+    f32 offset_y = last_mouse_y - pos_y; // Reversed since y-coordinates go from botom to top
     last_mouse_x = pos_x;
     last_mouse_y = pos_y;
     
-    f32 sensitivity = 0.05f;
-    offset_x *= sensitivity;
-    offset_y *= sensitivity;
-    
-    yaw += offset_x;
-    pitch += offset_y;
-    
-    if (pitch >  89.0f)  pitch = 89.0f;
-    if (pitch < -89.0f)  pitch = -89.0f;
-    
-    glm::vec3 direction;
-    direction.x = cos(glm::radians(yaw)) * cos(glm::radians(pitch));
-    direction.y = sin(glm::radians(pitch));
-    direction.z = sin(glm::radians(yaw)) * cos(glm::radians(pitch));
-    camera_direction = glm::normalize(direction);
+    process_mouse_movement(&camera, offset_x, offset_y);
 }
 
 void
 scroll_callback(GLFWwindow *window, double offset_x, double offset_y) {
-    if (fov >= 1.0f && fov <= 45.0f)  fov -= offset_y;
-    else if (fov <= 1.0f)  fov = 1.0f;
-    else if (fov >= 45.0f)  fov = 45.0f;
+    process_mouse_scroll(&camera, offset_y);
 }
 
 
@@ -124,7 +106,7 @@ int main() {
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
     // glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
     
-    GLFWwindow *window = glfwCreateWindow(800, 600, "OpenGL Playground", NULL, NULL);
+    GLFWwindow *window = glfwCreateWindow(SCREEN_WIDTH, SCREEN_HEIGHT, "OpenGL Playground", NULL, NULL);
     if (window == NULL) {
         glfwTerminate();
         return -1;
@@ -136,7 +118,7 @@ int main() {
         return -1;
     }
     
-    glViewport(0, 0, 800, 600);
+    glViewport(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT);
     glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
     
     glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
@@ -374,13 +356,10 @@ int main() {
         //
         // @note: Coordinate systems
         //
-        glm::mat4 view_matrix = glm::mat4(1.0f);
-        view_matrix = glm::lookAt(camera_pos,
-                                  camera_pos + camera_direction,
-                                  camera_up);
+        glm::mat4 view_matrix = get_view_matrix(&camera);
         
         glm::mat4 projection_matrix;
-        projection_matrix = glm::perspective(glm::radians(fov), 800.0f / 600.0f, 0.1f, 100.0f);
+        projection_matrix = glm::perspective(glm::radians(camera.fov), (f32)SCREEN_WIDTH / (f32)SCREEN_HEIGHT, 0.1f, 100.0f);
         
         int view_matrix_location = glGetUniformLocation(shader.id, "view_matrix");
         glUniformMatrix4fv(view_matrix_location, 1, GL_FALSE, glm::value_ptr(view_matrix));
