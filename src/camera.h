@@ -15,11 +15,11 @@ enum Camera_Movement {
 
 
 struct Camera {
-    glm::vec3 position  = glm::vec3(0.0f, 0.0f, 3.0f);
+    glm::vec3 position  = glm::vec3(0.0f, 0.0f, 0.0f);
     glm::vec3 direction = glm::vec3(0.0f, 0.0f, -1.0f);
     glm::vec3 up        = glm::vec3(0.0f, 1.0f, 0.0f);
     glm::vec3 right;
-    glm::vec3 world_up;
+    glm::vec3 world_up  = glm::vec3(0.0f, 1.0f, 0.0f);
     
     f32 yaw   = -90.0f;
     f32 pitch = 0.0f;
@@ -39,6 +39,16 @@ update_camera(Camera *camera) {
     
     camera->right = glm::normalize(glm::cross(camera->direction, camera->world_up));
     camera->up    = glm::normalize(glm::cross(camera->right, camera->direction));
+}
+
+Camera
+make_camera(glm::vec3 position) {
+    Camera camera = {};
+    camera.position = position;
+    camera.world_up = camera.up;
+    
+    update_camera(&camera);
+    return camera;
 }
 
 

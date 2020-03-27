@@ -76,6 +76,16 @@ set_uniform(Shader shader, const char *name, f32 value) {
     glUniform1f(glGetUniformLocation(shader.id, name), value);
 }
 
+void
+set_uniform(Shader shader, const char *name, f32 x, f32 y, f32 z) {
+    glUniform3f(glGetUniformLocation(shader.id, name), x, y, z);
+}
+
+void
+set_uniform(Shader shader, const char *name, glm::mat4 &value) {
+    glUniformMatrix4fv(glGetUniformLocation(shader.id, name), 1, GL_FALSE, &value[0][0]);
+}
+
 
 #define SHADER_H
 #endif//SHADER_H

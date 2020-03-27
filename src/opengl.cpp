@@ -47,7 +47,8 @@ global f32 last_mouse_y = SCREEN_HEIGHT / 2.0f;
 global f32 dt = 0.0f;
 global f32 last_frame = 0.0f;
 
-global Camera camera = {};
+global Camera camera = make_camera(glm::vec3(0.0f, 0.0f, 3.0f));
+global glm::vec3 light_pos(1.2f, 1.0f, 2.0f);
 
 
 void framebuffer_size_callback(GLFWwindow *window, int width, int height) {
@@ -127,126 +128,95 @@ int main() {
     
     glEnable(GL_DEPTH_TEST);
     
-    u32 vao; // @note Vertex array object
-    glGenVertexArrays(1, &vao);
-    glBindVertexArray(vao);
-    
-    
-#if 0
-    // @note: Draw Triangle
-    // Normalized Device Coordinates (NDC)
-    f32 vertices[] = {
-        // positions         // colors
-        -0.5, -0.5,  0.0f,  1.0f, 0.0f, 0.0f, // Vertex containing one 3D position
-        0.5f, -0.5f, 0.0f,  0.0f, 1.0f, 0.0f,
-        0.0f,  0.5f, 0.0f,  0.0f, 0.0f, 1.0f
-            
-            /*
-                    0.0f, 0.0f,  0.0f,
-                    0.5f, 0.0f, 0.0f,
-                    0.5f, 0.5f, 0.0f
-            */
-    };
-    // @note: Draw Texture
-    f32 vertices[] = {
-        // positions         // colors          // texture coordinates
-        0.5f,   0.5f, 0.0f,  1.0f, 0.0f, 0.0f,  1.0f, 1.0f, // top right
-        0.5f,  -0.5f, 0.0f,  0.0f, 1.0f, 0.0f,  1.0f, 0.0f, // bottom right
-        -0.5f, -0.5f, 0.0f,  0.0f, 0.0f, 1.0f,  0.0f, 0.0f, // bottom left
-        -0.5f,  0.5f, 0.0f,  1.0f, 1.0f, 0.0f,  0.0f, 1.0f, // top left
-    };
-#else
-    // @note: Draw textured cube
-    float vertices[] = {
-        -0.5f, -0.5f, -0.5f,  0.0f, 0.0f,
-        0.5f, -0.5f, -0.5f,  1.0f, 0.0f,
-        0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
-        0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
-        -0.5f,  0.5f, -0.5f,  0.0f, 1.0f,
-        -0.5f, -0.5f, -0.5f,  0.0f, 0.0f,
-        
-        -0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
-        0.5f, -0.5f,  0.5f,  1.0f, 0.0f,
-        0.5f,  0.5f,  0.5f,  1.0f, 1.0f,
-        0.5f,  0.5f,  0.5f,  1.0f, 1.0f,
-        -0.5f,  0.5f,  0.5f,  0.0f, 1.0f,
-        -0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
-        
-        -0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
-        -0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
-        -0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
-        -0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
-        -0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
-        -0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
-        
-        0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
-        0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
-        0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
-        0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
-        0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
-        0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
-        
-        -0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
-        0.5f, -0.5f, -0.5f,  1.0f, 1.0f,
-        0.5f, -0.5f,  0.5f,  1.0f, 0.0f,
-        0.5f, -0.5f,  0.5f,  1.0f, 0.0f,
-        -0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
-        -0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
-        
-        -0.5f,  0.5f, -0.5f,  0.0f, 1.0f,
-        0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
-        0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
-        0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
-        -0.5f,  0.5f,  0.5f,  0.0f, 0.0f,
-        -0.5f,  0.5f, -0.5f,  0.0f, 1.0f
-    };
-    // world space positions of our cubes
-    glm::vec3 cube_positions[] = {
-        glm::vec3( 0.0f,  0.0f,  0.0f),
-        glm::vec3( 2.0f,  5.0f, -15.0f),
-        glm::vec3(-1.5f, -2.2f, -2.5f),
-        glm::vec3(-3.8f, -2.0f, -12.3f),
-        glm::vec3( 2.4f, -0.4f, -3.5f),
-        glm::vec3(-1.7f,  3.0f, -7.5f),
-        glm::vec3( 1.3f, -2.0f, -2.5f),
-        glm::vec3( 1.5f,  2.0f, -2.5f),
-        glm::vec3( 1.5f,  0.2f, -1.5f),
-        glm::vec3(-1.3f,  1.0f, -1.5f)
-    };
-#endif
-    
-    u32 vbo; // @note Vertex buffer object
-    glGenBuffers(1, &vbo);
-    glBindBuffer(GL_ARRAY_BUFFER, vbo);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
-    u32 indices[] = {
-        0, 1, 3, // first triangle
-        1, 2, 3  // second triangle
-    };
-    
-    u32 ebo;
-    glGenBuffers(1, &ebo);
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo);
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
-    
     // @note: Vertex shader
-    const char *vertex_shader_source =
-#include "vertex_shader.glsl"
+    const char *lightning_vs_source =
+#include "lightning_vs.glsl"
     ;
     // @note: Fragment shader
-    const char *fragment_shader_source =
-#include "fragment_shader.glsl"
+    const char *lightning_fs_source =
+#include "lightning_fs.glsl"
     ;
-    Shader shader = create_shader(vertex_shader_source, fragment_shader_source);
-    use_shader(shader);
+    Shader lightning_shader = create_shader(lightning_vs_source, lightning_fs_source);
     
-    // @note: Position attribute
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(f32), (void *)0);
+    // @note: Vertex shader
+    const char *lamp_vs_source =
+#include "lamp_vs.glsl"
+    ;
+    // @note: Fragment shader
+    const char *lamp_fs_source =
+#include "lamp_fs.glsl"
+    ;
+    Shader lamp_shader = create_shader(lamp_vs_source, lamp_fs_source);
+    
+    
+    float vertices[] = {
+        -0.5f, -0.5f, -0.5f,
+        0.5f, -0.5f, -0.5f,
+        0.5f,  0.5f, -0.5f,
+        0.5f,  0.5f, -0.5f,
+        -0.5f,  0.5f, -0.5f,
+        -0.5f, -0.5f, -0.5f,
+        
+        -0.5f, -0.5f,  0.5f,
+        0.5f, -0.5f,  0.5f,
+        0.5f,  0.5f,  0.5f,
+        0.5f,  0.5f,  0.5f,
+        -0.5f,  0.5f,  0.5f,
+        -0.5f, -0.5f,  0.5f,
+        
+        -0.5f,  0.5f,  0.5f,
+        -0.5f,  0.5f, -0.5f,
+        -0.5f, -0.5f, -0.5f,
+        -0.5f, -0.5f, -0.5f,
+        -0.5f, -0.5f,  0.5f,
+        -0.5f,  0.5f,  0.5f,
+        
+        0.5f,  0.5f,  0.5f,
+        0.5f,  0.5f, -0.5f,
+        0.5f, -0.5f, -0.5f,
+        0.5f, -0.5f, -0.5f,
+        0.5f, -0.5f,  0.5f,
+        0.5f,  0.5f,  0.5f,
+        
+        -0.5f, -0.5f, -0.5f,
+        0.5f, -0.5f, -0.5f,
+        0.5f, -0.5f,  0.5f,
+        0.5f, -0.5f,  0.5f,
+        -0.5f, -0.5f,  0.5f,
+        -0.5f, -0.5f, -0.5f,
+        
+        -0.5f,  0.5f, -0.5f,
+        0.5f,  0.5f, -0.5f,
+        0.5f,  0.5f,  0.5f,
+        0.5f,  0.5f,  0.5f,
+        -0.5f,  0.5f,  0.5f,
+        -0.5f,  0.5f, -0.5f,
+    };
+    
+    // first, configure the cube's VAO (and vbo)
+    unsigned int vbo, cube_vao;
+    glGenVertexArrays(1, &cube_vao);
+    glGenBuffers(1, &vbo);
+    
+    glBindBuffer(GL_ARRAY_BUFFER, vbo);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
+    
+    glBindVertexArray(cube_vao);
+    
+    // position attribute
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
     glEnableVertexAttribArray(0);
     
-    // @note: Texture coordinates
-    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(f32), (void *)(3 * sizeof(f32)));
-    glEnableVertexAttribArray(1);
+    // second, configure the light's VAO (vbo stays the same; the vertices are the same for the light object which is also a 3D cube)
+    unsigned int light_vao;
+    glGenVertexArrays(1, &light_vao);
+    glBindVertexArray(light_vao);
+    
+    // we only need to bind to the vbo (to link it with glVertexAttribPointer), no need to fill it; the vbo's data already contains all we need (it's already bound, but we do it again for educational purposes)
+    glBindBuffer(GL_ARRAY_BUFFER, vbo);
+    
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
+    glEnableVertexAttribArray(0);
     
     
     //
@@ -296,9 +266,11 @@ int main() {
         }
     }
     
+#if 0
     use_shader(shader);
     glUniform1i(glGetUniformLocation(shader.id, "texture1"), 0);
     glUniform1i(glGetUniformLocation(shader.id, "texture2"), 1);
+#endif
     
     
     //
@@ -348,51 +320,35 @@ int main() {
         process_input(window);
         
         // @note: Update and Render
-        glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
+        glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         
-        use_shader(shader);
+        use_shader(lightning_shader);
+        set_uniform(lightning_shader, "object_color", 1.0f, 0.5f, 0.31f);
+        set_uniform(lightning_shader, "light_color",  1.0f, 1.0f, 1.0f);
         
-        //
-        // @note: Coordinate systems
-        //
+        // @note: Draw color cube
         glm::mat4 view_matrix = get_view_matrix(&camera);
+        glm::mat4 projection_matrix = glm::perspective(glm::radians(camera.fov), (f32)SCREEN_WIDTH / (f32)SCREEN_HEIGHT, 0.1f, 100.0f);
+        set_uniform(lightning_shader, "view_matrix", view_matrix);
+        set_uniform(lightning_shader, "projection_matrix", projection_matrix);
         
-        glm::mat4 projection_matrix;
-        projection_matrix = glm::perspective(glm::radians(camera.fov), (f32)SCREEN_WIDTH / (f32)SCREEN_HEIGHT, 0.1f, 100.0f);
+        glm::mat4 model_matrix = glm::mat4(1.0f);
+        set_uniform(lightning_shader, "model_matrix", model_matrix);
         
-        int view_matrix_location = glGetUniformLocation(shader.id, "view_matrix");
-        glUniformMatrix4fv(view_matrix_location, 1, GL_FALSE, glm::value_ptr(view_matrix));
-        int projection_matrix_location = glGetUniformLocation(shader.id, "projection_matrix");
-        glUniformMatrix4fv(projection_matrix_location, 1, GL_FALSE, glm::value_ptr(projection_matrix));
+        glBindVertexArray(cube_vao);
+        glDrawArrays(GL_TRIANGLES, 0, 36);
         
-        
-        glActiveTexture(GL_TEXTURE0);
-        glBindTexture(GL_TEXTURE_2D, texture1);
-        glActiveTexture(GL_TEXTURE1);
-        glBindTexture(GL_TEXTURE_2D, texture2);
-        
-        glBindVertexArray(vao);
-        defer {
-            glBindVertexArray(0);
-        };
-        for (u32 i = 0; i < 10; ++i) {
-            glm::mat4 model_matrix = glm::mat4(1.0f);
-            model_matrix = glm::translate(model_matrix, cube_positions[i]);
-            f32 angle = 20.0f * i;
-            model_matrix = glm::rotate(model_matrix, glm::radians(angle), glm::vec3(1.0f, 0.3f, 0.5f));
-            
-            int model_matrix_location = glGetUniformLocation(shader.id, "model_matrix");
-            glUniformMatrix4fv(model_matrix_location, 1, GL_FALSE, glm::value_ptr(model_matrix));
-            
-            glDrawArrays(GL_TRIANGLES, 0, 36);
-        }
-#if 0
-        // plane glDrawArrays(GL_TRIANGLES, 0, 6);
-        // #else
-        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo);
-        glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
-#endif
+        // @note: Draw lamp
+        use_shader(lamp_shader);
+        set_uniform(lamp_shader, "view_matrix", view_matrix);
+        set_uniform(lamp_shader, "projection_matrix", projection_matrix);
+        model_matrix = glm::mat4(1.0f);
+        model_matrix = glm::translate(model_matrix, light_pos);
+        model_matrix = glm::scale(model_matrix, glm::vec3(0.2f));
+        set_uniform(lamp_shader, "model_matrix", model_matrix);
+        glBindVertexArray(light_vao);
+        glDrawArrays(GL_TRIANGLES, 0, 36);
         
         glfwSwapBuffers(window);
         
