@@ -326,7 +326,10 @@ int main() {
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         
         use_shader(lighting_shader);
-        set_uniform(lighting_shader, "object_color", 1.0f, 0.5f, 0.31f);
+        set_uniform(lighting_shader, "material.ambient",   1.0f, 0.5f, 0.31f);
+        set_uniform(lighting_shader, "material.diffuse",   1.0f, 0.5f, 0.31f);
+        set_uniform(lighting_shader, "material.specular",  1.0f, 1.0f, 1.0f);
+        set_uniform(lighting_shader, "material.shininess", 32.0f);
         set_uniform(lighting_shader, "light_color",  1.0f, 1.0f, 1.0f);
         set_uniform(lighting_shader, "light_pos",    light_pos);
         set_uniform(lighting_shader, "view_pos",     camera.position);
