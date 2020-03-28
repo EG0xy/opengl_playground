@@ -330,8 +330,24 @@ int main() {
         set_uniform(lighting_shader, "material.diffuse",   1.0f, 0.5f, 0.31f);
         set_uniform(lighting_shader, "material.specular",  1.0f, 1.0f, 1.0f);
         set_uniform(lighting_shader, "material.shininess", 32.0f);
-        set_uniform(lighting_shader, "light_color",  1.0f, 1.0f, 1.0f);
-        set_uniform(lighting_shader, "light_pos",    light_pos);
+#if 0
+        set_uniform(lighting_shader, "light.position", light_pos);
+        set_uniform(lighting_shader, "light.ambient",  0.2f, 0.2f, 0.2f);
+        set_uniform(lighting_shader, "light.diffuse",  0.5f, 0.5f, 0.5f);
+        set_uniform(lighting_shader, "light.specular", 1.0f, 1.0f, 1.0f);
+#else
+        float time = glfwGetTime();
+        glm::vec3 light_color;
+        light_color.x = sin(time * 2.0f);
+        light_color.y = sin(time * 0.7f);
+        light_color.z = sin(time * 1.3f);
+        glm::vec3 diffuse_color = light_color * glm::vec3(0.5f);
+        glm::vec3 ambient_color = light_color * glm::vec3(0.2f);
+        set_uniform(lighting_shader, "light.position", light_pos);
+        set_uniform(lighting_shader, "light.ambient",  ambient_color);
+        set_uniform(lighting_shader, "light.diffuse",  diffuse_color);
+        set_uniform(lighting_shader, "light.specular", 1.0f, 1.0f, 1.0f);
+#endif
         set_uniform(lighting_shader, "view_pos",     camera.position);
         
         // @note: Draw color cube
