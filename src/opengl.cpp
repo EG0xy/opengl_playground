@@ -185,49 +185,49 @@ int main() {
     
     float vertices[] = {
         // positions          // normals           // texture coords
-        -0.5f, -0.5f, -0.5f,  0.0f,  0.0f, -1.0f,  0.0f, 0.0f,
-        0.5f, -0.5f, -0.5f,  0.0f,  0.0f, -1.0f,  1.0f, 0.0f,
-        0.5f,  0.5f, -0.5f,  0.0f,  0.0f, -1.0f,  1.0f, 1.0f,
-        0.5f,  0.5f, -0.5f,  0.0f,  0.0f, -1.0f,  1.0f, 1.0f,
-        -0.5f,  0.5f, -0.5f,  0.0f,  0.0f, -1.0f,  0.0f, 1.0f,
-        -0.5f, -0.5f, -0.5f,  0.0f,  0.0f, -1.0f,  0.0f, 0.0f,
-        
-        -0.5f, -0.5f,  0.5f,  0.0f,  0.0f, 1.0f,   0.0f, 0.0f,
-        0.5f, -0.5f,  0.5f,  0.0f,  0.0f, 1.0f,   1.0f, 0.0f,
-        0.5f,  0.5f,  0.5f,  0.0f,  0.0f, 1.0f,   1.0f, 1.0f,
-        0.5f,  0.5f,  0.5f,  0.0f,  0.0f, 1.0f,   1.0f, 1.0f,
-        -0.5f,  0.5f,  0.5f,  0.0f,  0.0f, 1.0f,   0.0f, 1.0f,
-        -0.5f, -0.5f,  0.5f,  0.0f,  0.0f, 1.0f,   0.0f, 0.0f,
-        
-        -0.5f,  0.5f,  0.5f, -1.0f,  0.0f,  0.0f,  1.0f, 0.0f,
-        -0.5f,  0.5f, -0.5f, -1.0f,  0.0f,  0.0f,  1.0f, 1.0f,
-        -0.5f, -0.5f, -0.5f, -1.0f,  0.0f,  0.0f,  0.0f, 1.0f,
-        -0.5f, -0.5f, -0.5f, -1.0f,  0.0f,  0.0f,  0.0f, 1.0f,
-        -0.5f, -0.5f,  0.5f, -1.0f,  0.0f,  0.0f,  0.0f, 0.0f,
-        -0.5f,  0.5f,  0.5f, -1.0f,  0.0f,  0.0f,  1.0f, 0.0f,
-        
-        0.5f,  0.5f,  0.5f,  1.0f,  0.0f,  0.0f,  1.0f, 0.0f,
-        0.5f,  0.5f, -0.5f,  1.0f,  0.0f,  0.0f,  1.0f, 1.0f,
-        0.5f, -0.5f, -0.5f,  1.0f,  0.0f,  0.0f,  0.0f, 1.0f,
-        0.5f, -0.5f, -0.5f,  1.0f,  0.0f,  0.0f,  0.0f, 1.0f,
-        0.5f, -0.5f,  0.5f,  1.0f,  0.0f,  0.0f,  0.0f, 0.0f,
-        0.5f,  0.5f,  0.5f,  1.0f,  0.0f,  0.0f,  1.0f, 0.0f,
-        
-        -0.5f, -0.5f, -0.5f,  0.0f, -1.0f,  0.0f,  0.0f, 1.0f,
-        0.5f, -0.5f, -0.5f,  0.0f, -1.0f,  0.0f,  1.0f, 1.0f,
-        0.5f, -0.5f,  0.5f,  0.0f, -1.0f,  0.0f,  1.0f, 0.0f,
-        0.5f, -0.5f,  0.5f,  0.0f, -1.0f,  0.0f,  1.0f, 0.0f,
-        -0.5f, -0.5f,  0.5f,  0.0f, -1.0f,  0.0f,  0.0f, 0.0f,
-        -0.5f, -0.5f, -0.5f,  0.0f, -1.0f,  0.0f,  0.0f, 1.0f,
-        
-        -0.5f,  0.5f, -0.5f,  0.0f,  1.0f,  0.0f,  0.0f, 1.0f,
-        0.5f,  0.5f, -0.5f,  0.0f,  1.0f,  0.0f,  1.0f, 1.0f,
-        0.5f,  0.5f,  0.5f,  0.0f,  1.0f,  0.0f,  1.0f, 0.0f,
-        0.5f,  0.5f,  0.5f,  0.0f,  1.0f,  0.0f,  1.0f, 0.0f,
-        -0.5f,  0.5f,  0.5f,  0.0f,  1.0f,  0.0f,  0.0f, 0.0f,
-        -0.5f,  0.5f, -0.5f,  0.0f,  1.0f,  0.0f,  0.0f, 1.0f
+        -0.5f, -0.5f, -0.5f,  0.0f,  0.0f, -1.0f,  0.0f,  0.0f,
+         0.5f, -0.5f, -0.5f,  0.0f,  0.0f, -1.0f,  1.0f,  0.0f,
+         0.5f,  0.5f, -0.5f,  0.0f,  0.0f, -1.0f,  1.0f,  1.0f,
+         0.5f,  0.5f, -0.5f,  0.0f,  0.0f, -1.0f,  1.0f,  1.0f,
+        -0.5f,  0.5f, -0.5f,  0.0f,  0.0f, -1.0f,  0.0f,  1.0f,
+        -0.5f, -0.5f, -0.5f,  0.0f,  0.0f, -1.0f,  0.0f,  0.0f,
+
+        -0.5f, -0.5f,  0.5f,  0.0f,  0.0f,  1.0f,  0.0f,  0.0f,
+         0.5f, -0.5f,  0.5f,  0.0f,  0.0f,  1.0f,  1.0f,  0.0f,
+         0.5f,  0.5f,  0.5f,  0.0f,  0.0f,  1.0f,  1.0f,  1.0f,
+         0.5f,  0.5f,  0.5f,  0.0f,  0.0f,  1.0f,  1.0f,  1.0f,
+        -0.5f,  0.5f,  0.5f,  0.0f,  0.0f,  1.0f,  0.0f,  1.0f,
+        -0.5f, -0.5f,  0.5f,  0.0f,  0.0f,  1.0f,  0.0f,  0.0f,
+
+        -0.5f,  0.5f,  0.5f, -1.0f,  0.0f,  0.0f,  1.0f,  0.0f,
+        -0.5f,  0.5f, -0.5f, -1.0f,  0.0f,  0.0f,  1.0f,  1.0f,
+        -0.5f, -0.5f, -0.5f, -1.0f,  0.0f,  0.0f,  0.0f,  1.0f,
+        -0.5f, -0.5f, -0.5f, -1.0f,  0.0f,  0.0f,  0.0f,  1.0f,
+        -0.5f, -0.5f,  0.5f, -1.0f,  0.0f,  0.0f,  0.0f,  0.0f,
+        -0.5f,  0.5f,  0.5f, -1.0f,  0.0f,  0.0f,  1.0f,  0.0f,
+
+         0.5f,  0.5f,  0.5f,  1.0f,  0.0f,  0.0f,  1.0f,  0.0f,
+         0.5f,  0.5f, -0.5f,  1.0f,  0.0f,  0.0f,  1.0f,  1.0f,
+         0.5f, -0.5f, -0.5f,  1.0f,  0.0f,  0.0f,  0.0f,  1.0f,
+         0.5f, -0.5f, -0.5f,  1.0f,  0.0f,  0.0f,  0.0f,  1.0f,
+         0.5f, -0.5f,  0.5f,  1.0f,  0.0f,  0.0f,  0.0f,  0.0f,
+         0.5f,  0.5f,  0.5f,  1.0f,  0.0f,  0.0f,  1.0f,  0.0f,
+
+        -0.5f, -0.5f, -0.5f,  0.0f, -1.0f,  0.0f,  0.0f,  1.0f,
+         0.5f, -0.5f, -0.5f,  0.0f, -1.0f,  0.0f,  1.0f,  1.0f,
+         0.5f, -0.5f,  0.5f,  0.0f, -1.0f,  0.0f,  1.0f,  0.0f,
+         0.5f, -0.5f,  0.5f,  0.0f, -1.0f,  0.0f,  1.0f,  0.0f,
+        -0.5f, -0.5f,  0.5f,  0.0f, -1.0f,  0.0f,  0.0f,  0.0f,
+        -0.5f, -0.5f, -0.5f,  0.0f, -1.0f,  0.0f,  0.0f,  1.0f,
+
+        -0.5f,  0.5f, -0.5f,  0.0f,  1.0f,  0.0f,  0.0f,  1.0f,
+         0.5f,  0.5f, -0.5f,  0.0f,  1.0f,  0.0f,  1.0f,  1.0f,
+         0.5f,  0.5f,  0.5f,  0.0f,  1.0f,  0.0f,  1.0f,  0.0f,
+         0.5f,  0.5f,  0.5f,  0.0f,  1.0f,  0.0f,  1.0f,  0.0f,
+        -0.5f,  0.5f,  0.5f,  0.0f,  1.0f,  0.0f,  0.0f,  0.0f,
+        -0.5f,  0.5f, -0.5f,  0.0f,  1.0f,  0.0f,  0.0f,  1.0f
     };
-	// positions all containers
+    // positions all containers
     glm::vec3 cube_positions[] = {
         glm::vec3( 0.0f,  0.0f,  0.0f),
         glm::vec3( 2.0f,  5.0f, -15.0f),
@@ -240,7 +240,14 @@ int main() {
         glm::vec3( 1.5f,  0.2f, -1.5f),
         glm::vec3(-1.3f,  1.0f, -1.5f)
     };
-    
+    // positions of the point lights
+    glm::vec3 point_light_positions[] = {
+        glm::vec3( 0.7f,  0.2f,  2.0f),
+        glm::vec3( 2.3f, -3.3f, -4.0f),
+        glm::vec3(-4.0f,  2.0f, -12.0f),
+        glm::vec3( 0.0f,  0.0f, -3.0f)
+    };
+	
     
     // first, configure the cube's VAO (and vbo)
     unsigned int vbo, cube_vao;
@@ -346,26 +353,56 @@ int main() {
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         
         use_shader(lighting_shader);
-        set_uniform(lighting_shader, "view_pos",     camera.position);
-#if 0 // Directional light
-		set_uniform(lighting_shader, "light.direction", -0.2f, -1.0f, -0.3f);
-#endif
-#if 0 // Point light
-		set_uniform(lighting_shader, "light.position", light_pos);
-#endif
-#if 1 // Spot light
-		set_uniform(lighting_shader, "light.position",  camera.position);
-		set_uniform(lighting_shader, "light.direction", camera.direction);
-		set_uniform(lighting_shader, "light.cut_off",       glm::cos(glm::radians(12.5f)));
-		set_uniform(lighting_shader, "light.outer_cut_off", glm::cos(glm::radians(17.5f)));
-#endif
-        set_uniform(lighting_shader, "light.ambient",  0.2f, 0.2f, 0.2f);
-        set_uniform(lighting_shader, "light.diffuse",  0.5f, 0.5f, 0.5f);
-        set_uniform(lighting_shader, "light.specular", 1.0f, 1.0f, 1.0f);
-        set_uniform(lighting_shader, "light.constant",  1.0f);
-        set_uniform(lighting_shader, "light.linear",    0.09f);
-        set_uniform(lighting_shader, "light.quadratic", 0.032f);
-        set_uniform(lighting_shader, "material.shininess", 32.0f);
+		set_uniform(lighting_shader, "view_pos", camera.position);
+		set_uniform(lighting_shader, "material.shininess", 32.0f);		
+        // directional light
+        set_uniform(lighting_shader, "directional_light.direction", -0.2f, -1.0f, -0.3f);
+        set_uniform(lighting_shader, "directional_light.ambient", 0.05f, 0.05f, 0.05f);
+        set_uniform(lighting_shader, "directional_light.diffuse", 0.4f, 0.4f, 0.4f);
+        set_uniform(lighting_shader, "directional_light.specular", 0.5f, 0.5f, 0.5f);
+        // point light 1
+        set_uniform(lighting_shader, "point_lights[0].position", point_light_positions[0]);
+        set_uniform(lighting_shader, "point_lights[0].ambient", 0.05f, 0.05f, 0.05f);
+        set_uniform(lighting_shader, "point_lights[0].diffuse", 0.8f, 0.8f, 0.8f);
+        set_uniform(lighting_shader, "point_lights[0].specular", 1.0f, 1.0f, 1.0f);
+        set_uniform(lighting_shader, "point_lights[0].constant", 1.0f);
+        set_uniform(lighting_shader, "point_lights[0].linear", 0.09f);
+        set_uniform(lighting_shader, "point_lights[0].quadratic", 0.032f);
+        // point light 2
+        set_uniform(lighting_shader, "point_lights[1].position", point_light_positions[1]);
+        set_uniform(lighting_shader, "point_lights[1].ambient", 0.05f, 0.05f, 0.05f);
+        set_uniform(lighting_shader, "point_lights[1].diffuse", 0.8f, 0.8f, 0.8f);
+        set_uniform(lighting_shader, "point_lights[1].specular", 1.0f, 1.0f, 1.0f);
+        set_uniform(lighting_shader, "point_lights[1].constant", 1.0f);
+        set_uniform(lighting_shader, "point_lights[1].linear", 0.09f);
+        set_uniform(lighting_shader, "point_lights[1].quadratic", 0.032f);
+        // point light 3
+        set_uniform(lighting_shader, "point_lights[2].position", point_light_positions[2]);
+        set_uniform(lighting_shader, "point_lights[2].ambient", 0.05f, 0.05f, 0.05f);
+        set_uniform(lighting_shader, "point_lights[2].diffuse", 0.8f, 0.8f, 0.8f);
+        set_uniform(lighting_shader, "point_lights[2].specular", 1.0f, 1.0f, 1.0f);
+        set_uniform(lighting_shader, "point_lights[2].constant", 1.0f);
+        set_uniform(lighting_shader, "point_lights[2].linear", 0.09f);
+        set_uniform(lighting_shader, "point_lights[2].quadratic", 0.032f);
+        // point light 4
+        set_uniform(lighting_shader, "point_lights[3].position", point_light_positions[3]);
+        set_uniform(lighting_shader, "point_lights[3].ambient", 0.05f, 0.05f, 0.05f);
+        set_uniform(lighting_shader, "point_lights[3].diffuse", 0.8f, 0.8f, 0.8f);
+        set_uniform(lighting_shader, "point_lights[3].specular", 1.0f, 1.0f, 1.0f);
+        set_uniform(lighting_shader, "point_lights[3].constant", 1.0f);
+        set_uniform(lighting_shader, "point_lights[3].linear", 0.09f);
+        set_uniform(lighting_shader, "point_lights[3].quadratic", 0.032f);
+        // spot_light
+        set_uniform(lighting_shader, "spot_light.position", camera.position);
+        set_uniform(lighting_shader, "spot_light.direction", camera.direction);
+        set_uniform(lighting_shader, "spot_light.ambient", 0.0f, 0.0f, 0.0f);
+        set_uniform(lighting_shader, "spot_light.diffuse", 1.0f, 1.0f, 1.0f);
+        set_uniform(lighting_shader, "spot_light.specular", 1.0f, 1.0f, 1.0f);
+        set_uniform(lighting_shader, "spot_light.constant", 1.0f);
+        set_uniform(lighting_shader, "spot_light.linear", 0.09f);
+        set_uniform(lighting_shader, "spot_light.quadratic", 0.032f);
+        set_uniform(lighting_shader, "spot_light.cut_off", glm::cos(glm::radians(12.5f)));
+        set_uniform(lighting_shader, "spot_light.outer_cut_off", glm::cos(glm::radians(15.0f)));  
         
         // @note: Draw color cube
         glm::mat4 view_matrix = get_view_matrix(&camera);
@@ -397,12 +434,14 @@ int main() {
         use_shader(lamp_shader);
         set_uniform(lamp_shader, "view_matrix", view_matrix);
         set_uniform(lamp_shader, "projection_matrix", projection_matrix);
-        model_matrix = glm::mat4(1.0f);
-        model_matrix = glm::translate(model_matrix, light_pos);
-        model_matrix = glm::scale(model_matrix, glm::vec3(0.2f));
-        set_uniform(lamp_shader, "model_matrix", model_matrix);
-        glBindVertexArray(light_vao);
-        glDrawArrays(GL_TRIANGLES, 0, 36);
+		glBindVertexArray(light_vao);
+		for (u32 i = 0; i < 4; i++) {
+            model_matrix = glm::mat4(1.0f);
+            model_matrix = glm::translate(model_matrix, point_light_positions[i]);
+            model_matrix = glm::scale(model_matrix, glm::vec3(0.2f)); // Make it a smaller cube
+            set_uniform(lamp_shader, "model_matrix", model_matrix);
+            glDrawArrays(GL_TRIANGLES, 0, 36);
+        }
         
         glfwSwapBuffers(window);
         
