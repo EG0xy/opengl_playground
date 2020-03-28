@@ -227,6 +227,19 @@ int main() {
         -0.5f,  0.5f,  0.5f,  0.0f,  1.0f,  0.0f,  0.0f, 0.0f,
         -0.5f,  0.5f, -0.5f,  0.0f,  1.0f,  0.0f,  0.0f, 1.0f
     };
+	// positions all containers
+    glm::vec3 cube_positions[] = {
+        glm::vec3( 0.0f,  0.0f,  0.0f),
+        glm::vec3( 2.0f,  5.0f, -15.0f),
+        glm::vec3(-1.5f, -2.2f, -2.5f),
+        glm::vec3(-3.8f, -2.0f, -12.3f),
+        glm::vec3( 2.4f, -0.4f, -3.5f),
+        glm::vec3(-1.7f,  3.0f, -7.5f),
+        glm::vec3( 1.3f, -2.0f, -2.5f),
+        glm::vec3( 1.5f,  2.0f, -2.5f),
+        glm::vec3( 1.5f,  0.2f, -1.5f),
+        glm::vec3(-1.3f,  1.0f, -1.5f)
+    };
     
     
     // first, configure the cube's VAO (and vbo)
@@ -334,11 +347,15 @@ int main() {
         
         use_shader(lighting_shader);
         set_uniform(lighting_shader, "view_pos",     camera.position);
-        set_uniform(lighting_shader, "light.position", light_pos);
+        // set_uniform(lighting_shader, "light.direction", -0.2f, -1.0f, -0.3f);
+		set_uniform(lighting_shader, "light.position", light_pos);
         set_uniform(lighting_shader, "light.ambient",  0.2f, 0.2f, 0.2f);
         set_uniform(lighting_shader, "light.diffuse",  0.5f, 0.5f, 0.5f);
         set_uniform(lighting_shader, "light.specular", 1.0f, 1.0f, 1.0f);
-        set_uniform(lighting_shader, "material.shininess", 64.0f);
+        set_uniform(lighting_shader, "light.constant",  1.0f);
+        set_uniform(lighting_shader, "light.linear",    0.09f);
+        set_uniform(lighting_shader, "light.quadratic", 0.032f);
+        set_uniform(lighting_shader, "material.shininess", 32.0f);
         
         // @note: Draw color cube
         glm::mat4 view_matrix = get_view_matrix(&camera);
@@ -346,18 +363,25 @@ int main() {
         set_uniform(lighting_shader, "view_matrix", view_matrix);
         set_uniform(lighting_shader, "projection_matrix", projection_matrix);
         
-        glm::mat4 model_matrix = glm::mat4(1.0f);
-        set_uniform(lighting_shader, "model_matrix", model_matrix);
-        
+		glm::mat4 model_matrix = glm::mat4(1.0f);
+		set_uniform(lighting_shader, "model_matrix", model_matrix);
+		
         glActiveTexture(GL_TEXTURE0);
         glBindTexture(GL_TEXTURE_2D, diffuse_map);
 		
 		glActiveTexture(GL_TEXTURE1);
         glBindTexture(GL_TEXTURE_2D, specular_map);
 		
-        
-        glBindVertexArray(cube_vao);
-        glDrawArrays(GL_TRIANGLES, 0, 36);
+        glBindVertexArray(cube_vao);		
+		for (u32 i = 0; i < 10; ++i) {
+			glm::mat4 model_matrix = glm::mat4(1.0f);
+			model_matrix = glm::translate(model_matrix, cube_positions[i]);
+			float angle = 20.0f * i;
+			model_matrix = glm::rotate(model_matrix, glm::radians(angle), glm::vec3(1.0f, 0.3f, 0.5f));
+			set_uniform(lighting_shader, "model_matrix", model_matrix);
+			
+			glDrawArrays(GL_TRIANGLES, 0, 36);
+		}
         
         // @note: Draw lamp
         use_shader(lamp_shader);
