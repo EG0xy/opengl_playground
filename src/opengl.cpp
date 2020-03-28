@@ -356,7 +356,8 @@ int main() {
 #if 1 // Spot light
 		set_uniform(lighting_shader, "light.position",  camera.position);
 		set_uniform(lighting_shader, "light.direction", camera.direction);
-		set_uniform(lighting_shader, "light.cut_off",   glm::cos(glm::radians(12.5f)));
+		set_uniform(lighting_shader, "light.cut_off",       glm::cos(glm::radians(12.5f)));
+		set_uniform(lighting_shader, "light.outer_cut_off", glm::cos(glm::radians(17.5f)));
 #endif
         set_uniform(lighting_shader, "light.ambient",  0.2f, 0.2f, 0.2f);
         set_uniform(lighting_shader, "light.diffuse",  0.5f, 0.5f, 0.5f);
