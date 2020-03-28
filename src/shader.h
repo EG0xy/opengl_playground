@@ -77,6 +77,11 @@ set_uniform(Shader shader, const char *name, f32 value) {
 }
 
 void
+set_uniform(Shader shader, const char *name, glm::vec3 value) {
+    glUniform3f(glGetUniformLocation(shader.id, name), value.x, value.y, value.z);
+}
+
+void
 set_uniform(Shader shader, const char *name, f32 x, f32 y, f32 z) {
     glUniform3f(glGetUniformLocation(shader.id, name), x, y, z);
 }
