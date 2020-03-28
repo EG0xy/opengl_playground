@@ -95,6 +95,40 @@ scroll_callback(GLFWwindow *window, double offset_x, double offset_y) {
     process_mouse_scroll(&camera, offset_y);
 }
 
+u32
+load_texture(char const * path) {
+    u32 texture_id;
+    // @note: Generating a texture
+    glGenTextures(1, &texture_id);
+        int width, height, nr_channels;
+        stbi_set_flip_vertically_on_load(true);
+        u8 *data = stbi_load(path, &width, &height, &nr_channels, 0);
+        defer {
+            stbi_image_free(data);
+        };
+        
+        if (data) {
+			GLenum format;
+			if (nr_channels == 1)  format = GL_RED;
+			else if (nr_channels == 3)  format = GL_RGB;
+			else if (nr_channels == 4)  format = GL_RGBA;
+			
+            glBindTexture(GL_TEXTURE_2D, texture_id);
+            glTexImage2D(GL_TEXTURE_2D, 0, format, width, height, 0, format, GL_UNSIGNED_BYTE, data);
+            glGenerateMipmap(GL_TEXTURE_2D);
+			
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+        }
+		else {
+			std::cout << "Texture failed to load at path: " << path << std::endl;
+		}
+	
+	return texture_id;
+}
+
 
 int main() {
     glfwInit();
@@ -239,77 +273,13 @@ int main() {
     //
     // @note: Textures
     //
-#if 0
-    u32 texture1;
-    // @note: Generating a texture
-    glGenTextures(1, &texture1);
-    glBindTexture(GL_TEXTURE_2D, texture1);
-    
-    {
-        int width, height, nr_channels;
-        u8 *data = stbi_load("../assets/container.jpg", &width, &height, &nr_channels, 0);
-        defer {
-            stbi_image_free(data);
-        };
-        
-        if (data) {
-            glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
-            glGenerateMipmap(GL_TEXTURE_2D);
-        }
-    }
-    u32 texture2;
-    // @note: Generating a texture
-    glGenTextures(1, &texture2);
-    glBindTexture(GL_TEXTURE_2D, texture2);
-    {
-        int width, height, nr_channels;
-        stbi_set_flip_vertically_on_load(true);
-        u8 *data = stbi_load("../assets/awesomeface.png", &width, &height, &nr_channels, 0);
-        defer {
-            stbi_image_free(data);
-        };
-        
-        if (data) {
-            glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
-            glGenerateMipmap(GL_TEXTURE_2D);
-        }
-    }
-    
-    use_shader(shader);
-    glUniform1i(glGetUniformLocation(shader.id, "texture1"), 0);
-    glUniform1i(glGetUniformLocation(shader.id, "texture2"), 1);
-#endif
     
     // @note: Diffuse map
-    u32 diffuse_map;
-    // @note: Generating a texture
-    glGenTextures(1, &diffuse_map);
-    {
-        int width, height, nr_channels;
-        stbi_set_flip_vertically_on_load(true);
-        u8 *data = stbi_load("../assets/container2.png", &width, &height, &nr_channels, 0);
-        defer {
-            stbi_image_free(data);
-        };
-        
-        if (data) {
-			GLenum format;
-			if (nr_channels == 1)  format = GL_RED;
-			else if (nr_channels == 3)  format = GL_RGB;
-			else if (nr_channels == 4)  format = GL_RGBA;
-			
-            glBindTexture(GL_TEXTURE_2D, diffuse_map);
-            glTexImage2D(GL_TEXTURE_2D, 0, format, width, height, 0, format, GL_UNSIGNED_BYTE, data);
-            glGenerateMipmap(GL_TEXTURE_2D);
-			
-			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
-            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-        }
-    }
+    u32 diffuse_map = load_texture("../assets/container2.png");
+	u32 specular_map = load_texture("../assets/container2_specular.png");
     use_shader(lighting_shader);
-    set_uniform(lighting_shader, "material.diffuse_map", (int)0);
+    set_int(lighting_shader, "material.diffuse_map", (int)0);
+	set_int(lighting_shader, "material.specular_map", (int)1);
     
     
     //
@@ -363,27 +333,12 @@ int main() {
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         
         use_shader(lighting_shader);
-        set_uniform(lighting_shader, "material.specular",  0.5f, 0.5f, 0.5f);
-        set_uniform(lighting_shader, "material.shininess", 64.0f);
-#if 1
+        set_uniform(lighting_shader, "view_pos",     camera.position);
         set_uniform(lighting_shader, "light.position", light_pos);
         set_uniform(lighting_shader, "light.ambient",  0.2f, 0.2f, 0.2f);
         set_uniform(lighting_shader, "light.diffuse",  0.5f, 0.5f, 0.5f);
         set_uniform(lighting_shader, "light.specular", 1.0f, 1.0f, 1.0f);
-#else
-        float time = glfwGetTime();
-        glm::vec3 light_color;
-        light_color.x = sin(time * 2.0f);
-        light_color.y = sin(time * 0.7f);
-        light_color.z = sin(time * 1.3f);
-        glm::vec3 diffuse_color = light_color * glm::vec3(0.5f);
-        glm::vec3 ambient_color = light_color * glm::vec3(0.2f);
-        set_uniform(lighting_shader, "light.position", light_pos);
-        set_uniform(lighting_shader, "light.ambient",  ambient_color);
-        set_uniform(lighting_shader, "light.diffuse",  diffuse_color);
-        set_uniform(lighting_shader, "light.specular", 1.0f, 1.0f, 1.0f);
-#endif
-        set_uniform(lighting_shader, "view_pos",     camera.position);
+        set_uniform(lighting_shader, "material.shininess", 64.0f);
         
         // @note: Draw color cube
         glm::mat4 view_matrix = get_view_matrix(&camera);
@@ -396,6 +351,10 @@ int main() {
         
         glActiveTexture(GL_TEXTURE0);
         glBindTexture(GL_TEXTURE_2D, diffuse_map);
+		
+		glActiveTexture(GL_TEXTURE1);
+        glBindTexture(GL_TEXTURE_2D, specular_map);
+		
         
         glBindVertexArray(cube_vao);
         glDrawArrays(GL_TRIANGLES, 0, 36);

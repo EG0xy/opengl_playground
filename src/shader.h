@@ -92,5 +92,11 @@ set_uniform(Shader shader, const char *name, glm::mat4 &value) {
 }
 
 
+void
+set_int(Shader shader, const char *name, int value) {
+	glUniform1i(glGetUniformLocation(shader.id, name), value);
+}
+
+
 #define SHADER_H
 #endif//SHADER_H
