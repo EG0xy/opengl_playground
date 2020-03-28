@@ -5,8 +5,8 @@ R"FOO(
 
 
 struct Material {
-    vec3 ambient;
-    vec3 diffuse;
+    // Opaque type, only passed as uniform, cant like be passed to a function!
+    sampler2D diffuse_map; // diffuse and ambient
     vec3 specular;
     float shininess;
 };
@@ -25,6 +25,7 @@ uniform Light    light;
 uniform vec3 view_pos;
 
 
+in vec2 tex_coords;
 in vec3 frag_pos;
 in vec3 normal;
 
@@ -34,13 +35,13 @@ out vec4 frag_color;
 
 void main() {
     // Ambient
-    vec3 ambient = light.ambient * material.ambient;
+    vec3 ambient = light.ambient * texture(material.diffuse_map, tex_coords).rgb;
 
     // Diffuse
     vec3 norm = normalize(normal);
     vec3 light_dir = normalize(light.position - frag_pos);
     float diff = max(dot(norm, light_dir), 0.0);
-    vec3 diffuse = light.diffuse * (diff * material.diffuse);
+    vec3 diffuse = light.diffuse * diff * texture(material.diffuse_map, tex_coords).rgb;
 
     // Specular
     vec3 view_dir = normalize(view_pos - frag_pos);
