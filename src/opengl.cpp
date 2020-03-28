@@ -347,8 +347,17 @@ int main() {
         
         use_shader(lighting_shader);
         set_uniform(lighting_shader, "view_pos",     camera.position);
-        // set_uniform(lighting_shader, "light.direction", -0.2f, -1.0f, -0.3f);
+#if 0 // Directional light
+		set_uniform(lighting_shader, "light.direction", -0.2f, -1.0f, -0.3f);
+#endif
+#if 0 // Point light
 		set_uniform(lighting_shader, "light.position", light_pos);
+#endif
+#if 1 // Spot light
+		set_uniform(lighting_shader, "light.position",  camera.position);
+		set_uniform(lighting_shader, "light.direction", camera.direction);
+		set_uniform(lighting_shader, "light.cut_off",   glm::cos(glm::radians(12.5f)));
+#endif
         set_uniform(lighting_shader, "light.ambient",  0.2f, 0.2f, 0.2f);
         set_uniform(lighting_shader, "light.diffuse",  0.5f, 0.5f, 0.5f);
         set_uniform(lighting_shader, "light.specular", 1.0f, 1.0f, 1.0f);
