@@ -22,6 +22,11 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
 
+#include <assimp/Importer.hpp>
+#include <assimp/scene.h>
+#include <assimp/postprocess.h>
+#include <vector>
+
 
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h"
@@ -36,9 +41,90 @@
 #include "camera.h"
 
 
+struct Vertex {
+    glm::vec3 position;
+    glm::vec3 normal;
+    glm::vec2 tex_coords;
+};
+
+struct Texture {
+    u32 id;
+    std::string type; // @todo Maybe a enum could be used?
+};
+
+struct Mesh {
+    std::vector<Vertex> vertices;
+    std::vector<u32> indices;
+    std::vector<Texture> textures;
+    
+    u32 vao, vbo, ebo;
+};
+
+void init_mesh(Mesh *mesh) {
+    glGenVertexArrays(1, &mesh->vao);
+    glGenBuffers(1, &mesh->vbo);
+    glGenBuffers(1, &mesh->ebo);
+    
+    glBindVertexArray(mesh->vao);
+    
+    glBindBuffer(GL_ARRAY_BUFFER, mesh->vbo);
+    glBufferData(GL_ARRAY_BUFFER, mesh->vertices.size() * sizeof(Vertex), &mesh->vertices[0], GL_STATIC_DRAW);
+    
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, mesh->ebo);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, mesh->indices.size() * sizeof(u32), &mesh->indices[0], GL_STATIC_DRAW);
+    
+    // Vertex positions
+    glEnableVertexAttribArray(0);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void *)0);
+    // Vertex normals
+    glEnableVertexAttribArray(1);
+    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void *)offsetof(Vertex, normal));
+    // Vertex texture coords
+    glEnableVertexAttribArray(2);
+    glVertexAttribPointer(2, 2, GL_FLOAT, GL_FLOAT, sizeof(Vertex), (void *)offsetof(Vertex, tex_coords));
+    
+    glBindVertexArray(0);
+}
+
+Mesh make_mesh(std::vector<Vertex> vertices, std::vector<u32> indices, std::vector<Texture> textures) {
+    Mesh result = {};
+    
+    result.vertices = vertices;
+    result.indices  = indices;
+    result.textures = textures;
+    
+    init_mesh(&result);
+    return result;
+}
+
+void draw_mesh(Mesh *mesh, Shader shader) {
+    u32 diffuse_map_count  = 1;
+    u32 specular_map_count = 1;
+    for (u32 i = 0; i < mesh->textures.size(); ++i) {
+        glActiveTexture(GL_TEXTURE0 + i);
+        std::string number;
+        std::string name = mesh->textures[i].type;
+        if (name == "texture_diffuse") {
+            number = std::to_string(diffuse_map_count++);
+        }
+        else if (name == "texture_specular") {
+            number = std::to_string(specular_map_count++);
+        }
+        
+        set_uniform(shader, ("material." + name + number).c_str(), (float)i);
+        glBindTexture(GL_TEXTURE_2D, mesh->textures[i].id);
+    }
+    glActiveTexture(GL_TEXTURE0);
+    
+    // Draw mesh
+    glBindVertexArray(mesh->vao);
+    glDrawElements(GL_TRIANGLES, mesh->indices.size(), GL_UNSIGNED_INT, 0);
+    glBindVertexArray(0);
+}
+
+
 #define SCREEN_WIDTH   800
 #define SCREEN_HEIGHT  600
-
 
 global b32 first_mouse = true;
 global f32 last_mouse_x = SCREEN_WIDTH / 2.0f;
@@ -100,31 +186,31 @@ load_texture(char const * path) {
     u32 texture_id;
     // @note: Generating a texture
     glGenTextures(1, &texture_id);
-        int width, height, nr_channels;
-        stbi_set_flip_vertically_on_load(true);
-        u8 *data = stbi_load(path, &width, &height, &nr_channels, 0);
-        defer {
-            stbi_image_free(data);
-        };
+    int width, height, nr_channels;
+    stbi_set_flip_vertically_on_load(true);
+    u8 *data = stbi_load(path, &width, &height, &nr_channels, 0);
+    defer {
+        stbi_image_free(data);
+    };
+    
+    if (data) {
+        GLenum format;
+        if (nr_channels == 1)  format = GL_RED;
+        else if (nr_channels == 3)  format = GL_RGB;
+        else if (nr_channels == 4)  format = GL_RGBA;
         
-        if (data) {
-			GLenum format;
-			if (nr_channels == 1)  format = GL_RED;
-			else if (nr_channels == 3)  format = GL_RGB;
-			else if (nr_channels == 4)  format = GL_RGBA;
-			
-            glBindTexture(GL_TEXTURE_2D, texture_id);
-            glTexImage2D(GL_TEXTURE_2D, 0, format, width, height, 0, format, GL_UNSIGNED_BYTE, data);
-            glGenerateMipmap(GL_TEXTURE_2D);
-			
-			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
-            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-        }
-		else {
-			std::cout << "Texture failed to load at path: " << path << std::endl;
-		}
+        glBindTexture(GL_TEXTURE_2D, texture_id);
+        glTexImage2D(GL_TEXTURE_2D, 0, format, width, height, 0, format, GL_UNSIGNED_BYTE, data);
+        glGenerateMipmap(GL_TEXTURE_2D);
+        
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    }
+    else {
+        std::cout << "Texture failed to load at path: " << path << std::endl;
+    }
 	
 	return texture_id;
 }
@@ -186,44 +272,44 @@ int main() {
     float vertices[] = {
         // positions          // normals           // texture coords
         -0.5f, -0.5f, -0.5f,  0.0f,  0.0f, -1.0f,  0.0f,  0.0f,
-         0.5f, -0.5f, -0.5f,  0.0f,  0.0f, -1.0f,  1.0f,  0.0f,
-         0.5f,  0.5f, -0.5f,  0.0f,  0.0f, -1.0f,  1.0f,  1.0f,
-         0.5f,  0.5f, -0.5f,  0.0f,  0.0f, -1.0f,  1.0f,  1.0f,
+        0.5f, -0.5f, -0.5f,  0.0f,  0.0f, -1.0f,  1.0f,  0.0f,
+        0.5f,  0.5f, -0.5f,  0.0f,  0.0f, -1.0f,  1.0f,  1.0f,
+        0.5f,  0.5f, -0.5f,  0.0f,  0.0f, -1.0f,  1.0f,  1.0f,
         -0.5f,  0.5f, -0.5f,  0.0f,  0.0f, -1.0f,  0.0f,  1.0f,
         -0.5f, -0.5f, -0.5f,  0.0f,  0.0f, -1.0f,  0.0f,  0.0f,
-
+        
         -0.5f, -0.5f,  0.5f,  0.0f,  0.0f,  1.0f,  0.0f,  0.0f,
-         0.5f, -0.5f,  0.5f,  0.0f,  0.0f,  1.0f,  1.0f,  0.0f,
-         0.5f,  0.5f,  0.5f,  0.0f,  0.0f,  1.0f,  1.0f,  1.0f,
-         0.5f,  0.5f,  0.5f,  0.0f,  0.0f,  1.0f,  1.0f,  1.0f,
+        0.5f, -0.5f,  0.5f,  0.0f,  0.0f,  1.0f,  1.0f,  0.0f,
+        0.5f,  0.5f,  0.5f,  0.0f,  0.0f,  1.0f,  1.0f,  1.0f,
+        0.5f,  0.5f,  0.5f,  0.0f,  0.0f,  1.0f,  1.0f,  1.0f,
         -0.5f,  0.5f,  0.5f,  0.0f,  0.0f,  1.0f,  0.0f,  1.0f,
         -0.5f, -0.5f,  0.5f,  0.0f,  0.0f,  1.0f,  0.0f,  0.0f,
-
+        
         -0.5f,  0.5f,  0.5f, -1.0f,  0.0f,  0.0f,  1.0f,  0.0f,
         -0.5f,  0.5f, -0.5f, -1.0f,  0.0f,  0.0f,  1.0f,  1.0f,
         -0.5f, -0.5f, -0.5f, -1.0f,  0.0f,  0.0f,  0.0f,  1.0f,
         -0.5f, -0.5f, -0.5f, -1.0f,  0.0f,  0.0f,  0.0f,  1.0f,
         -0.5f, -0.5f,  0.5f, -1.0f,  0.0f,  0.0f,  0.0f,  0.0f,
         -0.5f,  0.5f,  0.5f, -1.0f,  0.0f,  0.0f,  1.0f,  0.0f,
-
-         0.5f,  0.5f,  0.5f,  1.0f,  0.0f,  0.0f,  1.0f,  0.0f,
-         0.5f,  0.5f, -0.5f,  1.0f,  0.0f,  0.0f,  1.0f,  1.0f,
-         0.5f, -0.5f, -0.5f,  1.0f,  0.0f,  0.0f,  0.0f,  1.0f,
-         0.5f, -0.5f, -0.5f,  1.0f,  0.0f,  0.0f,  0.0f,  1.0f,
-         0.5f, -0.5f,  0.5f,  1.0f,  0.0f,  0.0f,  0.0f,  0.0f,
-         0.5f,  0.5f,  0.5f,  1.0f,  0.0f,  0.0f,  1.0f,  0.0f,
-
+        
+        0.5f,  0.5f,  0.5f,  1.0f,  0.0f,  0.0f,  1.0f,  0.0f,
+        0.5f,  0.5f, -0.5f,  1.0f,  0.0f,  0.0f,  1.0f,  1.0f,
+        0.5f, -0.5f, -0.5f,  1.0f,  0.0f,  0.0f,  0.0f,  1.0f,
+        0.5f, -0.5f, -0.5f,  1.0f,  0.0f,  0.0f,  0.0f,  1.0f,
+        0.5f, -0.5f,  0.5f,  1.0f,  0.0f,  0.0f,  0.0f,  0.0f,
+        0.5f,  0.5f,  0.5f,  1.0f,  0.0f,  0.0f,  1.0f,  0.0f,
+        
         -0.5f, -0.5f, -0.5f,  0.0f, -1.0f,  0.0f,  0.0f,  1.0f,
-         0.5f, -0.5f, -0.5f,  0.0f, -1.0f,  0.0f,  1.0f,  1.0f,
-         0.5f, -0.5f,  0.5f,  0.0f, -1.0f,  0.0f,  1.0f,  0.0f,
-         0.5f, -0.5f,  0.5f,  0.0f, -1.0f,  0.0f,  1.0f,  0.0f,
+        0.5f, -0.5f, -0.5f,  0.0f, -1.0f,  0.0f,  1.0f,  1.0f,
+        0.5f, -0.5f,  0.5f,  0.0f, -1.0f,  0.0f,  1.0f,  0.0f,
+        0.5f, -0.5f,  0.5f,  0.0f, -1.0f,  0.0f,  1.0f,  0.0f,
         -0.5f, -0.5f,  0.5f,  0.0f, -1.0f,  0.0f,  0.0f,  0.0f,
         -0.5f, -0.5f, -0.5f,  0.0f, -1.0f,  0.0f,  0.0f,  1.0f,
-
+        
         -0.5f,  0.5f, -0.5f,  0.0f,  1.0f,  0.0f,  0.0f,  1.0f,
-         0.5f,  0.5f, -0.5f,  0.0f,  1.0f,  0.0f,  1.0f,  1.0f,
-         0.5f,  0.5f,  0.5f,  0.0f,  1.0f,  0.0f,  1.0f,  0.0f,
-         0.5f,  0.5f,  0.5f,  0.0f,  1.0f,  0.0f,  1.0f,  0.0f,
+        0.5f,  0.5f, -0.5f,  0.0f,  1.0f,  0.0f,  1.0f,  1.0f,
+        0.5f,  0.5f,  0.5f,  0.0f,  1.0f,  0.0f,  1.0f,  0.0f,
+        0.5f,  0.5f,  0.5f,  0.0f,  1.0f,  0.0f,  1.0f,  0.0f,
         -0.5f,  0.5f,  0.5f,  0.0f,  1.0f,  0.0f,  0.0f,  0.0f,
         -0.5f,  0.5f, -0.5f,  0.0f,  1.0f,  0.0f,  0.0f,  1.0f
     };
@@ -354,7 +440,7 @@ int main() {
         
         use_shader(lighting_shader);
 		set_uniform(lighting_shader, "view_pos", camera.position);
-		set_uniform(lighting_shader, "material.shininess", 32.0f);		
+		set_uniform(lighting_shader, "material.shininess", 32.0f);
         // directional light
         set_uniform(lighting_shader, "directional_light.direction", -0.2f, -1.0f, -0.3f);
         set_uniform(lighting_shader, "directional_light.ambient", 0.05f, 0.05f, 0.05f);
@@ -402,7 +488,7 @@ int main() {
         set_uniform(lighting_shader, "spot_light.linear", 0.09f);
         set_uniform(lighting_shader, "spot_light.quadratic", 0.032f);
         set_uniform(lighting_shader, "spot_light.cut_off", glm::cos(glm::radians(12.5f)));
-        set_uniform(lighting_shader, "spot_light.outer_cut_off", glm::cos(glm::radians(15.0f)));  
+        set_uniform(lighting_shader, "spot_light.outer_cut_off", glm::cos(glm::radians(15.0f)));
         
         // @note: Draw color cube
         glm::mat4 view_matrix = get_view_matrix(&camera);
@@ -419,7 +505,7 @@ int main() {
 		glActiveTexture(GL_TEXTURE1);
         glBindTexture(GL_TEXTURE_2D, specular_map);
 		
-        glBindVertexArray(cube_vao);		
+        glBindVertexArray(cube_vao);
 		for (u32 i = 0; i < 10; ++i) {
 			glm::mat4 model_matrix = glm::mat4(1.0f);
 			model_matrix = glm::translate(model_matrix, cube_positions[i]);
